@@ -1,0 +1,63 @@
+{
+  "name": "To-Do Dailies",
+  "version": "0.1.0",
+  "namespace": "bh.general.ToDo",
+  "package": "To-Do Module.dll",
+  "manifest_version": 1,
+
+  "description": "A simple To-Do module for daily craftables.",
+  "dependencies": {
+    "bh.general.markersandpaths": ">=0.1.2"
+  },
+  "url": "https://github.com/blish-hud/Blish-HUD",
+  "author": {
+    "name": "Nickcode",
+    "username": "Nickcode.9025"
+  },
+
+  "directories": [ "markers" ],
+
+  "enabled_without_gw2": false,
+  "api_permissions": {
+    "account": {
+      "optional": true,
+      "details": "Needed if you want the special feature enabled."
+    },
+    "inventories": {
+      "optional": true,
+      "details": "Needed to review the item in your inventory."
+    },
+    "characters": {
+      "optional": true,
+      "details": "Needed to review the item in your inventory."
+    },
+    "tradingpost": {
+      "optional": true,
+      "details": "Needed to review the item in your inventory."
+    },
+    "wallet": {
+      "optional": true,
+      "details": "Needed to review the item in your inventory."
+    },
+    "unlocks": {
+      "optional": true,
+      "details": "Needed to review the item in your inventory."
+    },
+    "pvp": {
+      "optional": true,
+      "details": "Needed to review the item in your inventory."
+    },
+    "builds": {
+      "optional": true,
+      "details": "Needed to review the item in your inventory."
+    },
+    "progression": {
+      "optional": true,
+      "details": "Needed to review the item in your inventory."
+    },
+    "guilds": {
+      "optional": true,
+      "details": "Needed to review the item in your inventory."
+    }
+  }
+}
