@@ -36,6 +36,9 @@ namespace ToDoModule {
         // Controls (be sure to dispose of these in Unload()
         private CornerIcon       _exampleIcon;
 
+        private const string EC_ALLEVENTS = "All Tasks";
+
+        private List<DetailsButton> _displayedTasks;
         /// <summary>
         /// Ideally you should keep the constructor as is.
         /// Use <see cref="Initialize"/> to handle initializing the module.
@@ -56,7 +59,10 @@ namespace ToDoModule {
         /// Please note that Initialize is NOT asynchronous and will block Blish HUD's update
         /// and render loop, so be sure to not do anything here that takes too long.
         /// </summary>
-        protected override void Initialize() {}
+        protected override void Initialize()
+        {
+            _displayedTasks = new List<DetailsButton>();
+        }
 
         /// <summary>
         /// Load content and more here. This call is asynchronous, so it is a good time to
@@ -157,7 +163,7 @@ namespace ToDoModule {
                 {
                     Parent = taskPanel,
                     BasicTooltipText = task.Category,
-                    Text = task.Name,
+                    Text = task.Description,
                     IconSize = DetailsIconSize.Small,
                     ShowVignette = false,
                     HighlightType = DetailsHighlightType.LightHighlight,
@@ -165,7 +171,13 @@ namespace ToDoModule {
                     
                 };
 
+                if (task.Texture.HasTexture)
+                {
+                    es2.Icon = task.Texture;
+                }
+                _displayedTasks.Add(es2);
             }
+
             var actionPanel = new FlowPanel()
             {
                 Size = new Point(taskPanel.Width, 50),
@@ -178,12 +190,56 @@ namespace ToDoModule {
                 //BackgroundColor = Microsoft.Xna.Framework.Color.Black
 
             };
-            var testButton = new StandardButton
+            var newTaskButton = new StandardButton
             {
                 Parent = actionPanel,
                 Text = "New Task"
             };
+
+            //Add categories
+            var taskCategories = new Menu
+            {
+                Size = menuSection.ContentRegion.Size,
+                MenuItemHeight = 40,
+                Parent = menuSection,
+                CanSelect = true
+            };
+
+            List<IGrouping<string, tdTask>> submetas = tdTask.Tasks.GroupBy(e => e.Category).ToList();
+
+            var evAll = taskCategories.AddMenuItem(EC_ALLEVENTS);
+            evAll.Select();
+            evAll.Click += delegate {
+                taskPanel.FilterChildren<DetailsButton>(db => true);
+            };
+            foreach (IGrouping<string, tdTask> e in submetas)
+            {
+                var ev = taskCategories.AddMenuItem(e.Key);
+                ev.Click += delegate {
+                    taskPanel.FilterChildren<DetailsButton>(db => string.Equals(db.BasicTooltipText, e.Key));
+                };
+
+                
+            }
             return tdPanel;
+        }
+
+        private void RepositionES()
+        {
+            int pos = 0;
+            foreach (var es in _displayedTasks)
+            {
+                int x = pos % 2;
+                int y = pos / 2;
+
+                es.Location = new Point(x * 308, y * 108);
+
+                if (es.Visible) pos++;
+
+                // TODO: Just expose the panel to the module so that we don't have to do it this dumb way:
+                ((Panel)es.Parent).VerticalScrollOffset = 0;
+                es.Parent.Invalidate();
+            }
         }
 
         /// <summary>
@@ -206,6 +262,8 @@ namespace ToDoModule {
             ModuleInstance = null;
             GameService.Overlay.BlishHudWindow.RemoveTab(_todoTab);
             _exampleIcon.Dispose();
+            _displayedTasks.ForEach(de => de.Dispose());
+            _displayedTasks.Clear();
         }
 
     }
