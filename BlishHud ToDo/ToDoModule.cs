@@ -67,11 +67,16 @@ namespace ToDoModule {
         /// with <see cref="Blish_HUD.DirectorService.QueueMainThreadUpdate(Action{GameTime})"/>.
         /// </summary>
         protected override async Task LoadAsync() {
+
+            tdTask.Load();
             // Load content from the ref directory automatically with the ContentsManager
             _mugTexture = ContentsManager.GetTexture(@"textures\603447.png");
 
             _tabPanel = BuildHomePanel(GameService.Overlay.BlishHudWindow.ContentRegion);
+            
 
+
+            // var Dailies = await Gw2ApiManager.Gw2ApiClient.DailyCrafting.AllAsync();
         }
 
         /// <summary>
@@ -94,18 +99,89 @@ namespace ToDoModule {
         }
         private Panel BuildHomePanel(Microsoft.Xna.Framework.Rectangle panelBounds)
         {
+
             var tdPanel = new Panel()
             {
                 CanScroll = false,
                 Size = panelBounds.Size
             };
+
+            
+            int topOffset = 40 + Panel.MenuStandard.ControlOffset.Y;
+
             var menuSection = new Panel
             {
                 Title = "Event Categories",
                 ShowBorder = true,
-                Size = Panel.MenuStandard.Size - new Point(0, 1 + Panel.MenuStandard.ControlOffset.Y),
-                Location = new Point(Panel.MenuStandard.PanelOffset.X, 1),
+                Size = Panel.MenuStandard.Size - new Point(0, + topOffset + Panel.MenuStandard.ControlOffset.Y),
+                Location = new Point(Panel.MenuStandard.PanelOffset.X, topOffset),
                 Parent = tdPanel
+            };
+            var mainPanel = new FlowPanel()
+            {
+                FlowDirection = ControlFlowDirection.LeftToRight,
+                Location = new Point(menuSection.Right + Panel.MenuStandard.ControlOffset.X, menuSection.Top),
+                Size = new Point(tdPanel.Right - menuSection.Right - (Control.ControlStandard.ControlOffset.X * 2), menuSection.Height),
+                CanScroll = false,
+                Parent = tdPanel,
+            };
+            var taskPanel = new FlowPanel()
+            {
+                FlowDirection = ControlFlowDirection.LeftToRight,
+                ControlPadding = new Vector2(8,8),
+                //Location = new Point(menuSection.Right + Panel.MenuStandard.ControlOffset.X, menuSection.Top),
+                Size = new Point(tdPanel.Right - menuSection.Right - (Control.ControlStandard.ControlOffset.X *2), menuSection.Height - 70),
+                CanScroll = true,
+                Parent = mainPanel,
+                
+            };
+
+            GameService.Overlay.QueueMainThreadUpdate((gameTime) => {
+                var searchBox = new TextBox()
+                {
+                    PlaceholderText = "Filter Tasks",
+                    Width = menuSection.Width,
+                    Location = new Point(menuSection.Left, TextBox.Standard.ControlOffset.Y),
+                    Parent = tdPanel
+                };
+
+                searchBox.TextChanged += delegate (object sender, EventArgs args) {
+                    taskPanel.FilterChildren<DetailsButton>(db => db.Text.ToLower().Contains(searchBox.Text.ToLower()));
+                };
+            });
+
+            foreach (var task in tdTask.Tasks)
+            {
+
+                var es2 = new DetailsButton
+                {
+                    Parent = taskPanel,
+                    BasicTooltipText = task.Category,
+                    Text = task.Name,
+                    IconSize = DetailsIconSize.Small,
+                    ShowVignette = false,
+                    HighlightType = DetailsHighlightType.LightHighlight,
+                    ShowToggleButton = true
+                    
+                };
+
+            }
+            var actionPanel = new FlowPanel()
+            {
+                Size = new Point(taskPanel.Width, 50),
+                CanScroll = false,
+                FlowDirection = ControlFlowDirection.LeftToRight,
+                ShowBorder = false,
+                Parent = mainPanel,
+                ControlPadding = new Vector2(8, 8)
+
+                //BackgroundColor = Microsoft.Xna.Framework.Color.Black
+
+            };
+            var testButton = new StandardButton
+            {
+                Parent = actionPanel,
+                Text = "New Task"
             };
             return tdPanel;
         }
