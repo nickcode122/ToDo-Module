@@ -38,6 +38,7 @@ namespace ToDoModule {
 
         private const string EC_ALLEVENTS = "All Tasks";
 
+
         private List<DetailsButton> _displayedTasks;
         /// <summary>
         /// Ideally you should keep the constructor as is.
@@ -62,6 +63,7 @@ namespace ToDoModule {
         protected override void Initialize()
         {
             _displayedTasks = new List<DetailsButton>();
+
         }
 
         /// <summary>
@@ -73,15 +75,12 @@ namespace ToDoModule {
         /// with <see cref="Blish_HUD.DirectorService.QueueMainThreadUpdate(Action{GameTime})"/>.
         /// </summary>
         protected override async Task LoadAsync() {
-
-            tdTask.Load();
+            
+            
             // Load content from the ref directory automatically with the ContentsManager
             _mugTexture = ContentsManager.GetTexture(@"textures\603447.png");
-
-            _tabPanel = BuildHomePanel(GameService.Overlay.BlishHudWindow);
             
-
-
+                                          
             // var Dailies = await Gw2ApiManager.Gw2ApiClient.DailyCrafting.AllAsync();
         }
 
@@ -92,6 +91,8 @@ namespace ToDoModule {
         /// <see cref="ExternalModule.Loaded" /> to update correctly.
         /// </summary>
         protected override void OnModuleLoaded(EventArgs e) {
+            tdTask.Load();
+            _tabPanel = BuildHomePanel(GameService.Overlay.BlishHudWindow);
             _todoTab = GameService.Overlay.BlishHudWindow.AddTab("To-Do", _mugTexture, _tabPanel);
 
             // Add a mug icon in the top left next to the other icons
@@ -142,8 +143,6 @@ namespace ToDoModule {
                 Parent = mainPanel,
                 
             };
-
-            GameService.Overlay.QueueMainThreadUpdate((gameTime) => {
                 var searchBox = new TextBox()
                 {
                     PlaceholderText = "Filter Tasks",
@@ -155,29 +154,8 @@ namespace ToDoModule {
                 searchBox.TextChanged += delegate (object sender, EventArgs args) {
                     taskPanel.FilterChildren<DetailsButton>(db => db.Text.ToLower().Contains(searchBox.Text.ToLower()));
                 };
-            });
-
-            foreach (var task in tdTask.Tasks)
-            {
-
-                var es2 = new DetailsButton
-                {
-                    Parent = taskPanel,
-                    BasicTooltipText = task.Category,
-                    Text = task.Description,
-                    IconSize = DetailsIconSize.Small,
-                    ShowVignette = false,
-                    HighlightType = DetailsHighlightType.LightHighlight,
-                    ShowToggleButton = true
-                    
-                };
-
-                if (task.Texture.HasTexture)
-                {
-                    es2.Icon = task.Texture;
-                }
-                _displayedTasks.Add(es2);
-            }
+            //Populate tasks
+            foreach (var task in tdTask.Tasks) AddTask(taskPanel, task);
 
             var actionPanel = new FlowPanel()
             {
@@ -198,7 +176,7 @@ namespace ToDoModule {
             };
 
             //Create new panel to switch to
-            var newtaskPanel = BuildNewTaskPanel(wndw);
+            var newtaskPanel = BuildNewTaskPanel(wndw,taskPanel);
             newTaskButton.LeftMouseButtonReleased += delegate { wndw.Navigate(newtaskPanel, true); };
 
             //Add categories
@@ -229,7 +207,7 @@ namespace ToDoModule {
             return tdPanel;
         }
 
-        private Panel BuildNewTaskPanel(WindowBase wndw)
+        private Panel BuildNewTaskPanel(WindowBase wndw, Panel taskPanel)
         {
             var newTaskPanel = new Panel()
             {
@@ -241,11 +219,103 @@ namespace ToDoModule {
                 Text = "Tasks",
                 NavTitle = "Home",
                 Parent = newTaskPanel,
-                Location = new Point(20, 20),
+                Location = new Point(20, 20)
             };
 
+            var topOffset = backButton.Bottom + Panel.MenuStandard.PanelOffset.Y;
 
+            var mainPanel = new Panel()
+            {
+                Location = new Point(20 + Panel.MenuStandard.PanelOffset.X, topOffset),
+                Size = new Point(newTaskPanel.Right - 20, newTaskPanel.Bottom - topOffset),
+                Parent = newTaskPanel,
+                CanScroll = false
+            };
+            var flPanel = new FlowPanel()
+            {
+                //Location = new Point(0, 0),
+                Size = new Point(500, mainPanel.Height),
+                Parent = mainPanel,
+                CanScroll = false,
+                ShowBorder = false,
+                FlowDirection = ControlFlowDirection.LeftToRight,
+                ControlPadding = new Vector2(20,20)
+
+            };
+            var descriptionLabel = new Label
+            {
+                Size = new Point(500, 20),
+                //Location = new Point(0, 20),
+                Text = "Task Description:",
+                Parent = flPanel
+            };
+            var descriptionTextBox = new TextBox
+            {
+                Size = new Point(500, 50),
+                //Location = new Point(0, descriptionLabel.Bottom + Control.ControlStandard.ControlOffset.Y),
+                PlaceholderText = "Description",
+                Parent = flPanel
+            };
+            var categoryLabel = new Label
+            {
+                Size = new Point(500, 20),
+                //Location = new Point(0, descriptionTextBox.Bottom + 20),
+                Text = "Task Category:",
+                Parent = flPanel
+            };
+            //var categoryTextBox = new TextBox
+            //{
+            //    Size = new Point(500, 50),
+            //    //Location = new Point(0, categoryLabel.Bottom + Control.ControlStandard.ControlOffset.Y),
+            //    PlaceholderText = "Category",
+            //    Parent = flPanel
+            //};
+
+                var categoryDropdownBox = new Dropdown
+            {
+                Size = new Point(500, 50),
+                Parent = flPanel
+
+            };
+
+            List<IGrouping<string, tdTask>> categories = tdTask.Tasks.GroupBy(e => e.Category).ToList();
+
+            foreach (IGrouping<string, tdTask> e in categories)
+            {
+                categoryDropdownBox.Items.Add(e.Key);
+            }
+            var createTaskButton = new StandardButton
+            {
+                Parent = flPanel,
+                Text = "Create"
+            };
+            //var testTask = new tdTask() { Description = "Added Daily", Category = "Added" };
+
+            createTaskButton.LeftMouseButtonReleased += delegate 
+            {
+                var newTask = new tdTask() { Description = descriptionTextBox.Text, Category = categoryDropdownBox.SelectedItem };
+                AddTask(taskPanel, newTask);
+                descriptionTextBox.Text = "";
+                wndw.NavigateBack();
+            };
+            
             return newTaskPanel;
+        }
+
+        private void AddTask (Panel taskPanel, tdTask task)
+        {
+            var taskButton = new DetailsButton
+            {
+                Parent = taskPanel,
+                BasicTooltipText = task.Category,
+                Text = task.Description,
+                IconSize = DetailsIconSize.Small,
+                ShowVignette = false,
+                HighlightType = DetailsHighlightType.LightHighlight,
+                ShowToggleButton = true
+
+            };
+            if (task.Texture.HasTexture) taskButton.Icon = task.Texture;
         }
 
         private void RepositionES()

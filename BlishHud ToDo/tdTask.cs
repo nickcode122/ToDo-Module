@@ -36,22 +36,14 @@ namespace ToDoModule
         public AsyncTexture2D Texture { get; private set; } = new AsyncTexture2D(GameService.Content.GetTexture("102377"));
         public static void Load()
         {
-
             var tdTasks = new List<tdTask>();
 
             tdTasks.Add(new tdTask() { Description = "First Daily", Category = "Achievements"});
             tdTasks.Add(new tdTask() { Description = "Second Daily", Category = "Crafting"});
             tdTasks.Add(new tdTask() { Description = "This is a long title example, possibly will switch to content", Category = "Duplicate"});
             tdTasks.Add(new tdTask() { Description = "This is an even longer description to see just how much the text can wrap before it runs into an issue of some kind.", Category = "Duplicate"});
-            tdTasks.Add(new tdTask() { Description = "Dupliated for Testing", Category = "Duplicate"});
-            tdTasks.Add(new tdTask() { Description = "Dupliated for Testing", Category = "Duplicate"});
-            tdTasks.Add(new tdTask() { Description = "Dupliated for Testing", Category = "Duplicate"});
-            tdTasks.Add(new tdTask() { Description = "Dupliated for Testing", Category = "Duplicate"});
-            tdTasks.Add(new tdTask() { Description = "Dupliated for Testing", Category = "Duplicate"});
-            tdTasks.Add(new tdTask() { Description = "Dupliated for Testing", Category = "Duplicate"});
-            tdTasks.Add(new tdTask() { Description = "Dupliated for Testing", Category = "Duplicate"});
-            tdTasks.Add(new tdTask() { Description = "Dupliated for Testing", Category = "Duplicate"});
-            tdTasks.Add(new tdTask() { Description = "Dupliated for Testing", Category = "Duplicate"});
+            tdTasks.Add(new tdTask() { Description = "Winterberry Farm", Category = "Routines"});
+            tdTasks.Add(new tdTask() { Description = "Do the dishes!", Category = "Personal"});
 
             Tasks = tdTasks;
         }
