@@ -40,6 +40,9 @@ namespace ToDoModule {
 
 
         private List<DetailsButton> _displayedTasks;
+        private Dropdown categoryDropdownBox;
+        private Menu taskCategories;
+        private FlowPanel taskPanel;
         /// <summary>
         /// Ideally you should keep the constructor as is.
         /// Use <see cref="Initialize"/> to handle initializing the module.
@@ -63,7 +66,6 @@ namespace ToDoModule {
         protected override void Initialize()
         {
             _displayedTasks = new List<DetailsButton>();
-
         }
 
         /// <summary>
@@ -92,6 +94,7 @@ namespace ToDoModule {
         /// </summary>
         protected override void OnModuleLoaded(EventArgs e) {
             tdTask.Load();
+
             _tabPanel = BuildHomePanel(GameService.Overlay.BlishHudWindow);
             _todoTab = GameService.Overlay.BlishHudWindow.AddTab("To-Do", _mugTexture, _tabPanel);
 
@@ -133,7 +136,7 @@ namespace ToDoModule {
                 CanScroll = false,
                 Parent = tdPanel,
             };
-            var taskPanel = new FlowPanel()
+            taskPanel = new FlowPanel()
             {
                 FlowDirection = ControlFlowDirection.LeftToRight,
                 ControlPadding = new Vector2(8,8),
@@ -155,7 +158,7 @@ namespace ToDoModule {
                     taskPanel.FilterChildren<DetailsButton>(db => db.Text.ToLower().Contains(searchBox.Text.ToLower()));
                 };
             //Populate tasks
-            foreach (var task in tdTask.Tasks) AddTask(taskPanel, task);
+            foreach (var task in tdTask.Tasks) AddTask(task);
 
             var actionPanel = new FlowPanel()
             {
@@ -176,11 +179,11 @@ namespace ToDoModule {
             };
 
             //Create new panel to switch to
-            var newtaskPanel = BuildNewTaskPanel(wndw,taskPanel);
+            var newtaskPanel = BuildNewTaskPanel(wndw);
             newTaskButton.LeftMouseButtonReleased += delegate { wndw.Navigate(newtaskPanel, true); };
 
             //Add categories
-            var taskCategories = new Menu
+            taskCategories = new Menu
             {
                 Size = menuSection.ContentRegion.Size,
                 MenuItemHeight = 40,
@@ -188,26 +191,20 @@ namespace ToDoModule {
                 CanSelect = true
             };
 
-            List<IGrouping<string, tdTask>> submetas = tdTask.Tasks.GroupBy(e => e.Category).ToList();
 
-            var evAll = taskCategories.AddMenuItem(EC_ALLEVENTS);
-            evAll.Select();
-            evAll.Click += delegate {
-                taskPanel.FilterChildren<DetailsButton>(db => true);
-            };
-            foreach (IGrouping<string, tdTask> e in submetas)
-            {
-                var ev = taskCategories.AddMenuItem(e.Key);
-                ev.Click += delegate {
-                    taskPanel.FilterChildren<DetailsButton>(db => string.Equals(db.BasicTooltipText, e.Key));
-                };
 
-                
-            }
+            //foreach (IGrouping<string, tdTask> e in tdTask.Categories)
+            //{
+            //    var ev = taskCategories.AddMenuItem(e.Key);
+            //    ev.Click += delegate {
+            //        taskPanel.FilterChildren<DetailsButton>(db => string.Equals(db.BasicTooltipText, e.Key));
+            //    };
+            //}
+            UpdateCategories();
             return tdPanel;
         }
 
-        private Panel BuildNewTaskPanel(WindowBase wndw, Panel taskPanel)
+        private Panel BuildNewTaskPanel(WindowBase wndw)
         {
             var newTaskPanel = new Panel()
             {
@@ -233,7 +230,6 @@ namespace ToDoModule {
             };
             var flPanel = new FlowPanel()
             {
-                //Location = new Point(0, 0),
                 Size = new Point(500, mainPanel.Height),
                 Parent = mainPanel,
                 CanScroll = false,
@@ -271,38 +267,37 @@ namespace ToDoModule {
             //    Parent = flPanel
             //};
 
-                var categoryDropdownBox = new Dropdown
+             categoryDropdownBox = new Dropdown
             {
                 Size = new Point(500, 50),
                 Parent = flPanel
 
             };
 
-            List<IGrouping<string, tdTask>> categories = tdTask.Tasks.GroupBy(e => e.Category).ToList();
-
-            foreach (IGrouping<string, tdTask> e in categories)
-            {
-                categoryDropdownBox.Items.Add(e.Key);
-            }
+            //foreach (IGrouping<string, tdTask> e in tdTask.Categories)
+            //{
+            //    //categoryDropdownBox.Items.Add(e.Key);
+            //    AddCategory();
+            //}
+            UpdateCategories();
             var createTaskButton = new StandardButton
             {
                 Parent = flPanel,
                 Text = "Create"
             };
-            //var testTask = new tdTask() { Description = "Added Daily", Category = "Added" };
 
             createTaskButton.LeftMouseButtonReleased += delegate 
             {
                 var newTask = new tdTask() { Description = descriptionTextBox.Text, Category = categoryDropdownBox.SelectedItem };
-                AddTask(taskPanel, newTask);
+                AddTask(newTask);
                 descriptionTextBox.Text = "";
                 wndw.NavigateBack();
             };
             
             return newTaskPanel;
         }
-
-        private void AddTask (Panel taskPanel, tdTask task)
+        
+        private void AddTask (tdTask task)
         {
             var taskButton = new DetailsButton
             {
@@ -316,8 +311,37 @@ namespace ToDoModule {
 
             };
             if (task.Texture.HasTexture) taskButton.Icon = task.Texture;
+            UpdateCategories();
         }
+        private void UpdateCategories()
+        {
+            tdTask.UpdateCategories();
+            if (categoryDropdownBox != null) categoryDropdownBox.Items.Clear();
+            if (taskCategories != null)
+            {
+                while (taskCategories.Children.Count > 0)
+                {
+                    taskCategories.Children.First().Parent = null;
+                }
+                var evAll = taskCategories.AddMenuItem(EC_ALLEVENTS);
+                evAll.Select();
+                evAll.Click += delegate {taskPanel.FilterChildren<DetailsButton>(db => true);
+                };
+            }
+            foreach (IGrouping<string, tdTask> e in tdTask.Categories)
+            {
+                if (taskCategories != null)
+                {
+                    var ev = taskCategories.AddMenuItem(e.Key);
+                    ev.Click += delegate { taskPanel.FilterChildren<DetailsButton>(db => string.Equals(db.BasicTooltipText, e.Key)); };
+                }
 
+                if (categoryDropdownBox != null)
+                {
+                    categoryDropdownBox.Items.Add(e.Key);
+                }
+            }
+        }
         private void RepositionES()
         {
             int pos = 0;

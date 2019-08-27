@@ -11,7 +11,7 @@ namespace ToDoModule
     public class tdTask
     {
         public static List<tdTask> Tasks;
-
+        public static List<IGrouping<String, tdTask>> Categories;
         public string Description { get; set; }
         public string Category { get; set; }
         //public bool isCompleted { get; set; }
@@ -37,7 +37,9 @@ namespace ToDoModule
         public static void Load()
         {
             var tdTasks = new List<tdTask>();
+            
 
+            //Example task data will be switched out later
             tdTasks.Add(new tdTask() { Description = "First Daily", Category = "Achievements"});
             tdTasks.Add(new tdTask() { Description = "Second Daily", Category = "Crafting"});
             tdTasks.Add(new tdTask() { Description = "This is a long title example, possibly will switch to content", Category = "Duplicate"});
@@ -45,7 +47,20 @@ namespace ToDoModule
             tdTasks.Add(new tdTask() { Description = "Winterberry Farm", Category = "Routines"});
             tdTasks.Add(new tdTask() { Description = "Do the dishes!", Category = "Personal"});
 
+            
             Tasks = tdTasks;
+            UpdateCategories();
+
+
+        }
+        public static void UpdateCategories()
+        {
+            var tdCategories = new List<IGrouping<String, tdTask>>();
+            tdCategories = null;
+
+            //Populate Categories
+            tdCategories = Tasks.GroupBy(e => e.Category).ToList();
+            Categories = tdCategories;
         }
 
     }
